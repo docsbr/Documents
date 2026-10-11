@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gerador de RG</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    background: #0f0f14;
+    color: #e0e0e0;
+    min-height: 100vh;
+    padding: 20px 14px;
+  }
+  h1 { font-size: 20px; text-align: center; margin-bottom: 6px; }
+  .sub { color: #888; font-size: 12px; text-align: center; margin-bottom: 20px; }
+
+  .panel {
+    background: #16161e;
+    border: 1px solid #2a2a3e;
+    border-radius: 14px;
+    padding: 18px;
+    max-width: 520px;
+    margin: 0 auto 16px;
+  }
+  label {
+    display: block;
+    font-size: 11px;
+    color: #888;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    font-weight: 600;
+  }
+  input, select {
+    width: 100%;
+    padding: 11px 13px;
+    background: #0a0a12;
+    border: 1px solid #2a2a3e;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 14px;
+    outline: none;
+    margin-bottom: 12px;
+    font-family: inherit;
+  }
+  input:focus, select:focus { border-color: #4a6fff; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  button {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(90deg, #4a6fff, #6a8fff);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 6px;
+    font-family: inherit;
+  }
+  button:active { transform: scale(.98); }
+  button.sec { background: #1a1a24; border: 1px solid #2a2a3e; color: #aaa; }
+
+  #rgArea {
+    display: none;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 10px;
+  }
+  #rgArea.show { display: block; }
+
+  .rg-label {
+    text-align: center;
+    font-size: 11px;
+    color: #666;
+    margin: 16px 0 8px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  /* =================== RG CARD =================== */
+  .rg-card {
+    width: 100%;
+    aspect-ratio: 85.6 / 54;
+    background:
+      linear-gradient(135deg, rgba(255,255,255,.15) 0%, transparent 30%),
+      linear-gradient(160deg, #c8e0b8 0%, #b8d8a8 40%, #d0e8c0 70%, #c0d8b0 100%);
+    border-radius: 8px;
+    color: #1a2a1a;
+    position: relative;
+    box-shadow: 0 10px 40px rgba(0,0,0,.5);
+    overflow: hidden;
+    border: 1px solid #8a9a80;
+    font-family: "Arial", sans-serif;
+  }
+
+  /* textura de fundo */
+  .rg-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image:
+      radial-gradient(circle at 15% 20%, rgba(140,180,120,.25) 0%, transparent 35%),
+      radial-gradient(circle at 85% 80%, rgba(120,160,100,.18) 0%, transparent 35%),
+      repeating-linear-gradient(45deg, transparent, transparent 8px, rgba(120,160,100,.04) 8px, rgba(120,160,100,.04) 9px);
+    pointer-events: none;
+  }
+
+  /* moldura decorativa */
+  .rg-frame {
+    position: absolute;
+    inset: 3.5%;
+    border: 1px solid rgba(26,42,26,.25);
+    border-radius: 4px;
+    pointer-events: none;
+    z-index: 1;
+  }
+  .rg-frame::before {
+    content: "";
+    position: absolute;
+    inset: 2px;
+    border: 1px solid rgba(26,42,26,.15);
+    border-radius: 3px;
+  }
+
+  /* ====== FRENTE ====== */
+
+  /* header em cima */
+  .rg-front-header {
+    position: absolute;
+    top: 5.5%;
+    left: 6%;
+    right: 6%;
+    z-index: 2;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 1px solid rgba(26,42,26,.25);
+    padding-bottom: 1.5%;
+  }
+  .rg-front-header .esquerda {
+    font-size: 7.5px;
+    font-weight: 700;
+    letter-spacing: .3px;
+    text-transform: uppercase;
+    line-height: 1.4;
+    color: #1a2a1a;
+  }
+  .rg-front-header .esquerda small {
+    display: block;
+    font-weight: 400;
+    font-size: 6.5px;
+    opacity: .8;
+    letter-spacing: .2px;
+  }
+  .rg-front-header .direita {
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: .5px;
+    text-transform: uppercase;
+    text-align: right;
+    line-height: 1.3;
+    color: #1a2a1a;
+  }
+
+  /* brasão */
+  .rg-brasao {
+    position: absolute;
+    top: 6%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 6%;
+    height: auto;
+    z-index: 2;
+    opacity: .85;
+  }
+
+  /* número do RG — canto superior direito */
+  .rg-numero-frente {
+    position: absolute;
+    top: 20%;
+    right: 6%;
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: .5px;
+    color: #1a2a1a;
+    z-index: 2;
+  }
+
+  /* foto */
+  .rg-foto {
+    position: absolute;
+    top: 24%;
+    left: 6%;
+    width: 20%;
+    aspect-ratio: 3 / 4;
+    background: #a8c098;
+    border: 1px solid #6a7a60;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #4a5a40;
+    font-size: 6px;
+    text-align: center;
+    z-index: 2;
+  }
+  .rg-foto img { width: 100%; height: 100%; object-fit: cover; }
+
+  /* dados frente */
+  .rg-dados-frente {
+    position: absolute;
+    top: 24%;
+    left: 28%;
+    right: 30%;
+    bottom: 22%;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    gap: 3%;
+  }
+  .rg-dados-frente .campo {
+    line-height: 1.15;
+  }
+  .rg-dados-frente .campo .lbl {
+    font-size: 5.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .3px;
+    color: #1a2a1a;
+    opacity: .75;
+  }
+  .rg-dados-frente .campo .val {
+    font-size: 8.5px;
+    font-weight: 700;
+    color: #1a2a1a;
+    letter-spacing: .2px;
+    word-break: break-word;
+  }
+  .rg-dados-frente .campo .val.grande { font-size: 9.5px; }
+
+  /* filiação — lado direito */
+  .rg-filiacao-frente {
+    position: absolute;
+    top: 24%;
+    right: 6%;
+    width: 26%;
+    z-index: 2;
+  }
+  .rg-filiacao-frente .lbl {
+    font-size: 5.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .3px;
+    color: #1a2a1a;
+    opacity: .75;
+    margin-bottom: 2px;
+  }
+  .rg-filiacao-frente .nome {
+    font-size: 7px;
+    font-weight: 600;
+    color: #1a2a1a;
+    line-height: 1.35;
+    margin-bottom: 6px;
+  }
+
+  /* observações e assinatura — rodapé */
+  .rg-rodape-frente {
+    position: absolute;
+    bottom: 6%;
+    left: 6%;
+    right: 6%;
+    z-index: 2;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+  .rg-rodape-frente .bloco {
+    line-height: 1.3;
+  }
+  .rg-rodape-frente .bloco .lbl {
+    font-size: 5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .3px;
+    opacity: .7;
+  }
+  .rg-rodape-frente .bloco .val {
+    font-size: 7px;
+    font-weight: 700;
+  }
+  .rg-assinatura-frente {
+    position: absolute;
+    bottom: 3.5%;
+    left: 6%;
+    right: 6%;
+    text-align: center;
+    z-index: 2;
+  }
+  .rg-assinatura-frente .lbl {
+    font-size: 5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .3px;
+    opacity: .7;
+  }
+  .rg-assinatura-frente .assin {
+    font-family: "Brush Script MT", "Segoe Script", cursive;
+    font-size: 11px;
+    opacity: .85;
+    line-height: 1.2;
+  }
+
+  /* faixa lateral esquerda (vertical) */
+  .rg-side-vertical {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 4%;
+    background: linear-gradient(180deg, #2a5a2a, #1a3a1a);
+    color: #d8e8d0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 5px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    z-index: 3;
+  }
+
+  /* faixa lateral direita (vertical) — "CARTEIRA DE IDENTIDADE" */
+  .rg-side-direita {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 4%;
+    background: linear-gradient(180deg, #2a5a2a, #1a3a1a);
+    color: #d8e8d0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 5px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    writing-mode: vertical-rl;
+    z-index: 3;
+  }
+
+  /* ====== VERSO ====== */
+
+  .rg-verso-header {
+    position: absolute;
+    top: 4%;
+    left: 6%;
+    right: 6%;
+    z-index: 2;
+    text-align: center;
+    font-size: 6px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #1a2a1a;
+    opacity: .75;
+  }
+
+  .rg-verso-body {
+    position: absolute;
+    top: 14%;
+    left: 6%;
+    right: 6%;
+    bottom: 14%;
+    z-index: 2;
+    display: flex;
+    gap: 4%;
+  }
+
+  .rg-verso-esquerda {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 3%;
+    justify-content: space-between;
+  }
+
+  .rg-verso-direita {
+    width: 30%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .rg-verso-campo {
+    line-height: 1.15;
+  }
+  .rg-verso-campo .lbl {
+    font-size: 5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .3px;
+    color: #1a2a1a;
+    opacity: .7;
+  }
+  .rg-verso-campo .val {
+    font-size: 7.5px;
+    font-weight: 700;
+    color: #1a2a1a;
+    letter-spacing: .2px;
+    word-break: break-word;
+  }
+
+  .rg-verso-linha {
+    display: flex;
+    gap: 4%;
+    justify-content: space-between;
+  }
+  .rg-verso-linha > div { flex: 1; min-width: 0; }
+
+  /* digital */
+  .rg-digital {
+    width: 80%;
+    aspect-ratio: 1;
+    background: #c8d8b8;
+    border: 1px solid #6a7a60;
+    border-radius: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+  }
+  .rg-digital img { width: 100%; height: 100%; object-fit: cover; }
+  .rg-digital .placeholder {
+    font-size: 5px;
+    color: #5a6a50;
+    text-align: center;
+    padding: 4px;
+  }
+  .rg-digital .lbl {
+    position: absolute;
+    bottom: -8px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 4.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    opacity: .7;
+    color: #1a2a1a;
+  }
+
+  /* assinatura do diretor */
+  .rg-assinatura-diretor {
+    text-align: center;
+    margin-top: 4px;
+  }
+  .rg-assinatura-diretor .assin {
+    font-family: "Brush Script MT", "Segoe Script", cursive;
+    font-size: 9px;
+    opacity: .8;
+    line-height: 1.1;
+  }
+  .rg-assinatura-diretor .lbl {
+    font-size: 4.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .3px;
+    opacity: .7;
+    margin-top: 2px;
+  }
+
+  /* faixa "válido em todo território" — vertical nas laterais */
+  .rg-valido-esq {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 4%;
+    background: linear-gradient(180deg, #2a5a2a, #1a3a1a);
+    color: #d8e8d0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 5px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    z-index: 3;
+  }
+  .rg-valido-dir {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 4%;
+    background: linear-gradient(180deg, #2a5a2a, #1a3a1a);
+    color: #d8e8d0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 5px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    writing-mode: vertical-rl;
+    z-index: 3;
+  }
+
+  /* botões */
+  .actions { display: flex; gap: 10px; margin-top: 16px; }
+  .actions button { margin-top: 0; }
+
+  .hint {
+    text-align: center;
+    font-size: 11px;
+    color: #666;
+    margin-top: 14px;
+    line-height: 1.5;
+  }
+
+  @media print {
+    body { background: #fff; padding: 0; }
+    h1, .sub, .panel, .actions, .hint, .rg-label { display: none !important; }
+    #rgArea { display: block !important; max-width: 100%; padding: 0; }
+    .rg-card { box-shadow: none; border-radius: 4px; margin-bottom: 10px; page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<h1>Gerador de RG</h1>
+<div class="sub">Frente e verso — igual ao original</div>
+
+<div class="panel">
+  <label>Estado</label>
+  <select id="estado">
+    <option value="SP">São Paulo (SP)</option>
+    <option value="AC">Acre (AC)</option>
+    <option value="RJ">Rio de Janeiro (RJ)</option>
+    <option value="MG">Minas Gerais (MG)</option>
+    <option value="RS">Rio Grande do Sul (RS)</option>
+    <option value="BA">Bahia (BA)</option>
+    <option value="PR">Paraná (PR)</option>
+    <option value="PE">Pernambuco (PE)</option>
+    <option value="CE">Ceará (CE)</option>
+    <option value="DF">Distrito Federal (DF)</option>
+  </select>
+
+  <label>Nome Completo</label>
+  <input type="text" id="nome" value="MAY LINNY VERAS DA SILVA">
+
+  <div class="row2">
+    <div>
+      <label>Data de Nascimento</label>
+      <input type="text" id="nasc" value="19/02/1994">
+    </div>
+    <div>
+      <label>Naturalidade</label>
+      <input type="text" id="natural" value="RIO BRANCO - AC">
+    </div>
+  </div>
+
+  <label>Filiação (Mãe)</label>
+  <input type="text" id="mae" value="MARICLÁUDIA DA SILVA VERAS">
+
+  <label>Filiação (Pai)</label>
+  <input type="text" id="pai" value="JOSEMAR EVANGELISTA DA SILVA">
+
+  <div class="row2">
+    <div>
+      <label>RG</label>
+      <input type="text" id="rg" value="8600-9">
+    </div>
+    <div>
+      <label>Órgão Expedidor</label>
+      <input type="text" id="orgao" value="SSP-SP">
+    </div>
+  </div>
+
+  <label>CPF</label>
+  <input type="text" id="cpf" value="992.624.792-04">
+
+  <div class="row2">
+    <div>
+      <label>Data de Emissão</label>
+      <input type="text" id="emissao" value="05/09/2022">
+    </div>
+    <div>
+      <label>Validade</label>
+      <input type="text" id="validade" value="INDETERMINADO">
+    </div>
+  </div>
+
+  <label>Observações (opcional)</label>
+  <input type="text" id="obs" value="">
+
+  <label>Foto (opcional)</label>
+  <input type="file" id="foto" accept="image/*">
+
+  <label>Digital (opcional)</label>
+  <input type="file" id="digital" accept="image/*">
+
+  <button onclick="gerarRG()">Gerar RG (Frente e Verso)</button>
+</div>
+
+<div id="rgArea">
+  <div class="rg-label">Frente</div>
+  <div class="rg-card" id="rgFrente">
+
+    <!-- faixas laterais -->
+    <div class="rg-side-vertical">CARTEIRA DE IDENTIDADE</div>
+    <div class="rg-side-direita">ESTADO DE SÃO PAULO</div>
+
+    <!-- header -->
+    <div class="rg-front-header">
+      <div class="esquerda">
+        REPÚBLICA FEDERATIVA DO BRASIL
+        <small id="outEstado">ESTADO DE SÃO PAULO</small>
+        <small id="outSec">SECRETARIA DA SEGURANÇA PÚBLICA</small>
+        <small id="outInst">INSTITUTO DE IDENTIFICAÇÃO RICARDO GUMBLETON DAUNT</small>
+      </div>
+      <div class="direita">
+        CARTEIRA DE<br>IDENTIDADE
+      </div>
+    </div>
+
+    <!-- número do RG (canto sup dir) -->
+    <div class="rg-numero-frente" id="outRgFrente">8600-9</div>
+
+    <!-- brasão central -->
+    <svg class="rg-brasao" viewBox="0 0 40 40">
+      <circle cx="20" cy="20" r="18" fill="#1a3a1a"/>
+      <circle cx="20" cy="20" r="14" fill="#c8e0b8"/>
+      <path d="M20 8 L23 16 L31 16 L25 21 L27 29 L20 24 L13 29 L15 21 L9 16 L17 16 Z" fill="#1a3a1a"/>
+    </svg>
+
+    <!-- foto -->
+    <div class="rg-foto" id="fotoBox">SEM FOTO</div>
+
+    <!-- dados principais -->
+    <div class="rg-dados-frente">
+      <div class="campo">
+        <div class="lbl">Nome</div>
+        <div class="val grande" id="outNome">—</div>
+      </div>
+      <div class="campo">
+        <div class="lbl">Data Nascimento</div>
+        <div class="val" id="outNasc">—</div>
+      </div>
+      <div class="campo">
+        <div class="lbl">Naturalidade</div>
+        <div class="val" id="outNatural">—</div>
+      </div>
+      <div class="campo">
+        <div class="lbl">Órgão Expedidor</div>
+        <div class="val" id="outOrgao">—</div>
+      </div>
+    </div>
+
+    <!-- filiação -->
+    <div class="rg-filiacao-frente">
+      <div class="lbl">Filiação</div>
+      <div class="nome" id="outMae">—</div>
+      <div class="lbl" style="margin-top:4px;">&nbsp;</div>
+      <div class="nome" id="outPai">—</div>
+    </div>
+
+    <!-- observações -->
+    <div class="rg-rodape-frente">
+      <div class="bloco">
+        <div class="lbl">Observação</div>
+        <div class="val" id="outObs">—</div>
+      </div>
+    </div>
+
+    <!-- assinatura do titular -->
+    <div class="rg-assinatura-frente">
+      <div class="assin" id="outAssinatura">Assinatura do Titular</div>
+      <div class="lbl">Assinatura do Titular</div>
+    </div>
+
+  </div>
+
+  <div class="rg-label">Verso</div>
+  <div class="rg-card" id="rgVerso">
+
+    <div class="rg-valido-esq">VÁLIDO EM TODO O TERRITÓRIO NACIONAL</div>
+    <div class="rg-valido-dir">VÁLIDO EM TODO O TERRITÓRIO NACIONAL</div>
+
+    <div class="rg-verso-header">NÃO PLASTIFICAR</div>
+
+    <div class="rg-verso-body">
+      <div class="rg-verso-esquerda">
+
+        <div class="rg-verso-linha">
+          <div class="rg-verso-campo">
+            <div class="lbl">CPF</div>
+            <div class="val" id="outCpfV">—</div>
+          </div>
+          <div class="rg-verso-campo">
+            <div class="lbl">Data de Expedição</div>
+            <div class="val" id="outEmissaoV">—</div>
+          </div>
+        </div>
+
+        <div class="rg-verso-campo">
+          <div class="lbl">Registro Geral</div>
+          <div class="val" id="outRgV">—</div>
+        </div>
+
+        <div class="rg-verso-campo">
+          <div class="lbl">Registro Civil</div>
+          <div class="val" id="outRegCivil">—</div>
+        </div>
+
+        <div class="rg-verso-linha">
+          <div class="rg-verso-campo">
+            <div class="lbl">T. Eleitor</div>
+            <div class="val" id="outTitulo">—</div>
+          </div>
+          <div class="rg-verso-campo">
+            <div class="lbl">CTPS</div>
+            <div class="val" id="outCtps">—</div>
+          </div>
+        </div>
+
+        <div class="rg-verso-linha">
+          <div class="rg-verso-campo">
+            <div class="lbl">NIS/PIS/PASEP</div>
+            <div class="val" id="outPis">—</div>
+          </div>
+          <div class="rg-verso-campo">
+            <div class="lbl">Série / UF</div>
+            <div class="val" id="outSerie">—</div>
+          </div>
+        </div>
+
+        <div class="rg-verso-linha">
+          <div class="rg-verso-campo">
+            <div class="lbl">Cert. Militar</div>
+            <div class="val" id="outMilitar">—</div>
+          </div>
+          <div class="rg-verso-campo">
+            <div class="lbl">CNH</div>
+            <div class="val" id="outCnh">—</div>
+          </div>
+        </div>
+
+        <div class="rg-verso-campo">
+          <div class="lbl">Identidade Profissional</div>
+          <div class="val" id="outProf">—</div>
+        </div>
+
+      </div>
+
+      <div class="rg-verso-direita">
+        <div class="rg-digital" id="digitalBox">
+          <div class="placeholder">DIGITAL<br>POLEGAR DIREITO</div>
+          <div class="lbl">Polegar Direito</div>
+        </div>
+
+        <div class="rg-assinatura-diretor">
+          <div class="assin">Assinatura do Diretor</div>
+          <div class="lbl">Assinatura do Diretor</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="actions">
+    <button onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>
+    <button class="sec" onclick="window.location.reload()">↺ Novo RG</button>
+  </div>
+
+  <div class="hint">
+    Frente e verso no mesmo documento. Imprima em papel couché 300g.
+  </div>
+</div>
+
+<script>
+function $(id) { return document.getElementById(id); }
+
+const ESTADOS = {
+  SP: { gov: "ESTADO DE SÃO PAULO", sec: "SECRETARIA DA SEGURANÇA PÚBLICA", inst: "INSTITUTO DE IDENTIFICAÇÃO RICARDO GUMBLETON DAUNT" },
+  AC: { gov: "ESTADO DO ACRE", sec: "SECRETARIA DE SEGURANÇA PÚBLICA", inst: "INSTITUTO DE IDENTIFICAÇÃO" },
+  RJ: { gov: "ESTADO DO RIO DE JANEIRO", sec: "SECRETARIA DE ESTADO DE POLÍCIA CIVIL", inst: "INSTITUTO DE IDENTIFICAÇÃO" },
+  MG: { gov: "ESTADO DE MINAS GERAIS", sec: "SECRETARIA DE ESTADO DE SEGURANÇA PÚBLICA", inst: "INSTITUTO DE IDENTIFICAÇÃO" },
+  RS: { gov: "ESTADO DO RIO GRANDE DO SUL", sec: "SECRETARIA DE SEGURANÇA PÚBLICA", inst: "INSTITUTO GERAL DE PERÍCIAS" },
+  BA: { gov: "ESTADO DA BAHIA", sec: "SECRETARIA DA SEGURANÇA PÚBLICA", inst: "INSTITUTO DE IDENTIFICAÇÃO" },
+  PR: { gov: "ESTADO DO PARANÁ", sec: "SECRETARIA DE ESTADO DA SEGURANÇA PÚBLICA", inst: "INSTITUTO DE IDENTIFICAÇÃO" },
+  PE: { gov: "ESTADO DE PERNAMBUCO", sec: "SECRETARIA DE DEFESA SOCIAL", inst: "INSTITUTO DE IDENTIFICAÇÃO" },
+  CE: { gov: "ESTADO DO CEARÁ", sec: "SECRETARIA DA SEGURANÇA PÚBLICA", inst: "INSTITUTO DE IDENTIFICAÇÃO" },
+  DF: { gov: "DISTRITO FEDERAL", sec: "SECRETARIA DE SEGURANÇA PÚBLICA", inst: "INSTITUTO DE IDENTIFICAÇÃO" }
+};
+
+function gerarRG() {
+  const nome = $("nome").value.trim();
+  const nasc = $("nasc").value.trim();
+  const natural = $("natural").value.trim();
+  const mae = $("mae").value.trim();
+  const pai = $("pai").value.trim();
+  const rg = $("rg").value.trim();
+  const orgao = $("orgao").value.trim();
+  const cpf = $("cpf").value.trim();
+  const emissao = $("emissao").value.trim();
+  const obs = $("obs").value.trim();
+
+  if (!nome) { alert("Preencha o nome."); return; }
+
+  const est = $("estado").value;
+  $("outEstado").textContent = ESTADOS[est].gov;
+  $("outSec").textContent = ESTADOS[est].sec;
+  $("outInst").textContent = ESTADOS[est].inst;
+
+  // FRENTE
+  $("outNome").textContent = nome;
+  $("outNasc").textContent = nasc || "—";
+  $("outNatural").textContent = natural || "—";
+  $("outOrgao").textContent = orgao || "—";
+  $("outMae").textContent = mae || "—";
+  $("outPai").textContent = pai || "—";
+  $("outObs").textContent = obs || "—";
+  $("outRgFrente").textContent = rg || "—";
+  $("outAssinatura").textContent = nome;
+
+  // VERSO
+  $("outCpfV").textContent = cpf || "—";
+  $("outEmissaoV").textContent = emissao || "—";
+  $("outRgV").textContent = rg || "—";
+  $("outRegCivil").textContent = "CN-LV.A076/FILS.212/Nº31717";
+  $("outTitulo").textContent = "000006154792445";
+  $("outCtps").textContent = "0000000206528";
+  $("outPis").textContent = "20769714956";
+  $("outSerie").textContent = "0004 - AC";
+  $("outMilitar").textContent = "—";
+  $("outCnh").textContent = "700300949451330";
+  $("outProf").textContent = "—";
+
+  // foto
+  const file = $("foto").files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      $("fotoBox").innerHTML = '<img src="' + e.target.result + '" alt="foto">';
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // digital
+  const dfile = $("digital").files[0];
+  if (dfile) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      $("digitalBox").innerHTML = '<img src="' + e.target.result + '" alt="digital"><div class="lbl">Polegar Direito</div>';
+    };
+    reader.readAsDataURL(dfile);
+  }
+
+  $("rgArea").classList.add("show");
+  $("rgArea").scrollIntoView({ behavior: "smooth" });
+}
+</script>
+</body>
+</html>
